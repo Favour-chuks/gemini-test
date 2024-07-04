@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import fs from "fs";
 import multer from "multer";
+import axios from "axios";
 
 const port = 5000;
 
@@ -22,12 +23,14 @@ const storage = multer.diskStorage({
     cb(null, "public");
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + "-" + file.orignalname);
+    cb(null, Date.now() + "-" + file.orignalname + ".png");
   },
 });
 
 const upload = multer({ storage: storage }).single("file");
-let filePath;
+
+
+
 app.post("/file", (req, res) => {
   upload(req, res, (err) => {
     if (err) {
@@ -35,48 +38,30 @@ app.post("/file", (req, res) => {
     }
 
     filePath = req.file.path;
+    mimeType = req.file.mimetype;
+    imageValue = filePath.split("\\").reverse().at(0);
+    fileURI = `file://${req.get("host")}/${filePath}`;
+    filename = req.file;
   });
 });
 
-app.post("/", async (req, res) => {
-  console.log(req.body.history);
-  console.log(req.body.message);
-
-  const chat = model.startChat({
-    history: req.body.history,
-  });
-  const message = req.body.message;
-
-  const result = await chat.sendMessage(message);
-  const response = await result.response;
-  const text = response.text();
-
-  res.send(text);
+app.post("/get", async (req, res) => {
+  const prompt = "what is in this image";
+const image = {
+  inlineData: {
+    data: Buffer.from(fs.readFileSync("img.png")).toString("base64"),
+    mimeType: "image/png",
+  },
+};
+try{
+  
+const result = await model.generateContent([prompt, image]);
+console.log(result.response.text());
+}catch(error){
+  console.log(error.message)
+}
 });
 
-app.post("/openAI", async (req, res) => {
-  const prompt = req.body.message;
-
-  const image = fs.readFileSync(filePath, "base64");
-
-  try {
-    const result = await model.generateContent([
-      prompt,
-      {
-        inlineData: {
-          mimeType: image,
-          fileUri: `data:image/jpeg:base64,${image}`,
-        },
-      },
-    ]);
-    console.log(result.response.text());
-  } catch (error) {
-    console.log(error);
-  }
-
-  // // Output the generated text to the console
-  // console.log(result.response.text());
-});
 
 app.listen(port, () => {
   console.log(`listening on port: ${port}`);

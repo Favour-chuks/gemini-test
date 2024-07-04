@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+
 export default function App() {
   const [image, setImage] = useState(null);
   // const [chatResponse, setChatResponse] = useState("");
@@ -21,6 +22,7 @@ export default function App() {
   const uploadImage = async (e: any) => {
     const formData = new FormData();
     formData.append("file", e.target.files[0]);
+
     setImage(e.target.files[0]);
     e.target.value = null;
     try {
@@ -49,14 +51,57 @@ export default function App() {
           "Content-Type": "application/json",
         },
       };
-      const response = await fetch("http://localhost:5000/openAI", options);
+      const response = await fetch("http://localhost:5000/gemini", options);
       console.log(response);
     } catch (error: any) {
       setError(error);
     }
   };
+
+  const pushContent = async () => {
+    try {
+      const options = {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      };
+      const response = await fetch("http://localhost:5000/storage", options);
+      console.log(response);
+    } catch (error: any) {
+      console.log(error.message);
+    }
+  };
+
+  const getData =  async () => {
+    // const options = {
+    //   method : 'GET',
+    //   url: 'http://localhost:5000/get'
+    // }
+    // axios.request(options).then((response) => {
+    //   console.log(response.data);
+    //   setGetResponse(response.data)
+    // })
+
+    try {
+      const options = {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      };
+      const response = await fetch("http://localhost:5000/storage", options);
+      console.log(response);
+    } catch (error: any) {
+      console.log(error.message);
+    }
+
+  };
   return (
     <div className="bg-slate-200 p-10">
+      <button onClick={pushContent}>push to database</button>
+      <button onClick={getData}>get database</button>
+    
       <div className="flex flex-row justify-between">
         <div id="image-preview">
           {image && (
